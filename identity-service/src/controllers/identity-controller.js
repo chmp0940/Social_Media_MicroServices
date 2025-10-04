@@ -22,10 +22,10 @@ const registerUser = async (req, res) => {
 
     let user = await User.findOne({ $or: [{ email }, { userName }] });
     if (user) {
-      logger.warn("User Already Exists", error.details[0].message);
+      logger.warn("User Already Exists");
       return res.status(400).json({
         success: false,
-        message: error.details[0].message,
+        message: "user Already Exists",
       });
     }
 
