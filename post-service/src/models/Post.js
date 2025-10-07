@@ -4,7 +4,7 @@ const postSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      requried: true,
+      required: true,
     },
     content: {
       type: String,
@@ -25,9 +25,8 @@ const postSchema = new mongoose.Schema(
   }
 );
 
+postSchema.index({ content: "text" });
 
-postSchema.index({content:'text'})
+const Post = mongoose.model("Post", postSchema);
 
-const Post =mongoose.model('Post',postSchema);
-
-module.exports=Post;
+module.exports = Post;

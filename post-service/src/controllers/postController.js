@@ -1,5 +1,6 @@
 const Post = require("../models/Post");
 const logger = require("../utils/logger");
+const { publishEvent } = require("../utils/rabbitMq");
 const { validateCreatePost } = require("../utils/validation");
 
 async function invalidatePostCache(req, input) {
@@ -33,6 +34,14 @@ const createPost = async (req, res) => {
     });
 
     await newlyCreatedPost.save();
+
+    await publishEvent('post.created',{
+      postId:newlyCreatedPost._id.toString(),
+      userId:newlyCreatedPost.user.toString(),
+      content:newlyCreatedPost.content,
+      createdAt:newlyCreatedPost.createdAt
+    })
+
     await invalidatePostCache(req, newlyCreatedPost._id.toString());
     logger.info("Post created successfully", newlyCreatedPost);
     res.status(201).json({
@@ -125,11 +134,11 @@ const deletePost = async (req, res) => {
   try {
     const deletePostId = req.params.id;
 
-    const deletePost = await Post.findByIdAndDelete({
+    const post = await Post.findByIdAndDelete({
       _id:deletePostId,
       user:req.user.userId
     });
-    if (!deletePost) {
+    if (!post) {
       logger.warn("deletePost id not present");
       return res.status(404).json({
         message: "not able to find and delete post with this id",
@@ -137,7 +146,15 @@ const deletePost = async (req, res) => {
       });
     }
 
-    await invalidatePostCache(req, deletePost._id.toString());
+    // publish post delete method ->
+    // this method is defined in rabbit mq file pls see it 
+    await publishEvent('post.deleted',{
+      postId:post._id.toString(),
+      userId:req.user.userId,
+      mediaIds:post.mediaIds
+    })
+
+    await invalidatePostCache(req, post._id.toString());
 
     res.status(200).json({
       message: "successfully deleted the post",

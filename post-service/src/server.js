@@ -1,21 +1,20 @@
 require("dotenv").config();
-const express = require('express');
+const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const mongoose = require("mongoose");
 
 const postRoutes = require("./routes/post-routes");
 const errorHandler = require("./middlewares/errorHandler");
-const logger=require('./utils/logger');
+const logger = require("./utils/logger");
 // const { RateLimiterRedis } = require("rate-limiter-flexible");
 const Redis = require("ioredis");
+const { connectRabbitMq } = require("./utils/rabbitMq");
 // const { rateLimit } = require("express-rate-limit");
 // const { RedisStore } = require("rate-limit-redis");
 
-
-const app=express();
-const PORT=process.env.PORT||3002
-
+const app = express();
+const PORT = process.env.PORT || 3002;
 
 mongoose
   .connect(process.env.MONGODB_URI)
@@ -25,7 +24,6 @@ mongoose
   .catch((e) => logger.error("Mongo connection error", e));
 
 const redisClient = new Redis(process.env.REDIS_URL);
-
 
 // middlewares
 app.use(helmet());
@@ -37,7 +35,7 @@ app.use((req, res, next) => {
   logger.info(`Received body , ${req.body} `);
   next();
 });
-
+// hw- implement ip based rate limiting
 
 // const rateLimiter = new RateLimiterRedis({
 //   storeClient: redisClient,
@@ -79,21 +77,30 @@ app.use((req, res, next) => {
 // app.use("/api/post/create", sensitiveEndPointsLimiter);
 
 // routes also pass redis clinet to routes
-app.use('/api/posts',(req,res,next)=>{
-  req.redisClient=redisClient;
-  next();
-},postRoutes)
+app.use(
+  "/api/posts",
+  (req, res, next) => {
+    req.redisClient = redisClient;
+    next();
+  },
+  postRoutes
+);
 
 app.use(errorHandler);
-
-app.listen(PORT, () => {
-  logger.info(`Identity service running on port ${PORT}`);
-});
-
+async function startServer() {
+  try {
+    await connectRabbitMq();
+    app.listen(PORT, () => {
+      logger.info(`Post Service running on port ${PORT}`);
+    });
+  } catch (error) {
+    logger.error("Failed to connect  to server", error);
+    process.exit(1);
+  }
+}
+startServer();
 //unhandlerd promise rejection
 
 process.on("unhandledRejection", (reason, promise) => {
   logger.error("unhandled Rejection at", promise, "reason:", reason);
 });
-
-
