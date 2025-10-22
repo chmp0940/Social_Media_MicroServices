@@ -1,5 +1,5 @@
 const amqp = require("amqplib");
-const logger = require("../../../media-service/src/utils/logger");
+const logger = require("./logger");
 
 let connection = null;
 let channel = null;
@@ -40,4 +40,4 @@ async function publishEvent(routingKey, message) {
   logger.info(`Event published :${routingKey} `);
 }
 
-module.exports = { connectRabbitMq ,publishEvent};
+module.exports = { connectRabbitMq, publishEvent };

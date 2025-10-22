@@ -1,5 +1,5 @@
 const amqp = require("amqplib");
-const logger = require("../../../media-service/src/utils/logger");
+const logger = require("./logger");
 
 let connection = null;
 let channel = null;
@@ -23,7 +23,6 @@ async function connectRabbitMq() {
     logger.error("Error connectiong to rabbit mq", error);
   }
 }
-
 
 // seee in server we have used this function by giving routing key same as that we have given while publishing
 async function consumeEvent(routingKey, callback) {
