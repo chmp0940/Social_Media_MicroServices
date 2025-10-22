@@ -1,14 +1,26 @@
+# 6. docker-compose
+#     A tool to define and run multi-container Docker applications.
+#     Uses a docker-compose.yml file to specify services, networks, and volumes.
+#     Example: You can run your API, database, cache, and message queue together.
+# 7. Isolation
+#     Each container runs in its own isolated environment (process, filesystem, network).
+#     Prevents conflicts between dependencies and applications.
+
+
 version: "3.8"
 
 services:
   api-gateway:
     build: ./api-gateway
+    # Build the Docker image from the api-gateway folder.
     ports:
       - "3000:3000"
+      # Map container port 3000 to host port 3000.
     env_file: ./api-gateway/.env
     depends_on:
       - redis
       - rabbitmq
+      # Start Redis and RabbitMQ before this service
     environment:
       - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://rabbitmq:5672
@@ -53,18 +65,20 @@ services:
       - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://rabbitmq:5672
 
-redis:
-  image: redis:alpine
-  ports: 
-    - "6379:6379"
+  redis:
+    image: redis:alpine
+    ports: 
+      - "6379:6379"
 
-rabbitmq:
-  image: rabbitmq:3-management
-  ports:
-    - "5672:5672"
-    - "15672:15672"
-  healthcheck:
-    test: ["CMD", "rabbitmq-diagnostics", "q", "ping"]
-    interval: 30s
-    timeout: 10s
-    retries: 5
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+# command -:  docker compose build
